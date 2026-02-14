@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DF-Shield | AI Forensic Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00f2ff; --bg: #050505; --card: rgba(255, 255, 255, 0.05); }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .container { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 50px; border-radius: 24px; width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        h1 { font-family: 'Orbitron', sans-serif; letter-spacing: 4px; font-size: 1.5rem; margin-bottom: 30px; color: var(--primary); text-transform: uppercase; }
+        
+        .upload-area { border: 2px dashed rgba(0, 242, 255, 0.3); padding: 30px; border-radius: 15px; margin-bottom: 25px; transition: 0.3s; }
+        .upload-area:hover { border-color: var(--primary); background: rgba(0, 242, 255, 0.02); }
+        
+        input[type="file"] { display: none; }
+        .custom-file-upload { display: inline-block; padding: 12px 24px; cursor: pointer; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+
+        button { width: 100%; background: var(--primary); color: #000; border: none; padding: 15px; font-weight: 700; font-family: 'Orbitron'; cursor: pointer; border-radius: 8px; transition: 0.3s; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); }
+        button:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
+
+        #loader { display: none; margin-top: 20px; font-size: 12px; letter-spacing: 2px; color: var(--primary); animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+        #resultBox { margin-top: 25px; padding: 20px; border-radius: 12px; display: none; text-transform: uppercase; font-family: 'Orbitron'; font-size: 18px; }
+        .stats { font-family: 'Inter'; font-size: 12px; margin-top: 8px; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>DF-Shield AI</h1>
+    <div class="upload-area">
+        <label for="videoInput" class="custom-file-upload">SELECT SOURCE VIDEO</label>
+        <input type="file" id="videoInput" accept="video/*">
+        <div id="fileName" style="font-size: 12px; opacity: 0.5;">No file selected</div>
+    </div>
+
+    <button onclick="analyzeVideo()">INITIATE SCAN</button>
+
+    <div id="loader">RUNNING NEURAL NETWORK ANALYSIS...</div>
+    <div id="resultBox"></div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('videoInput');
+    fileInput.onchange = () => { document.getElementById('fileName').innerText = fileInput.files[0].name; };
+
+    async function analyzeVideo() {
+        const loader = document.getElementById('loader');
+        const resultBox = document.getElementById('resultBox');
+
+        if (fileInput.files.length === 0) return;
+
+        loader.style.display = "block";
+        resultBox.style.display = "none";
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch("http://127.0.0.1:8001/detect", { method: "POST", body: formData });
+            const data = await response.json();
+
+            loader.style.display = "none";
+            resultBox.style.display = "block";
+            resultBox.style.border = `1px solid ${data.color}`;
+            resultBox.style.color = data.color;
+            resultBox.innerHTML = `${data.result}<div class="stats">Integrity: ${data.confidence} | Latency: 42ms</div>`;
+        } catch (err) {
+            loader.innerText = "CONNECTION_ERROR: RECHECK BACKEND";
+        }
+    }
+</script>
+
+</body>
+</html>
